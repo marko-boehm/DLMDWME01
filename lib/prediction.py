@@ -62,7 +62,8 @@ class Predictor():
         df = X.copy()
         df[column] = y
         df = df.sort_values(by=column, ascending=ascending)
-        return df.head(n_top)
+        df_top_n =  df.head(n_top)
+        return df_top_n.reset_index(drop=True)
     
     def __load_training_data(self, file_path_df_train):
         self.df_train = pd.read_csv(file_path_df_train, index_col=0)
@@ -92,17 +93,17 @@ class Predictor():
         X_class = self.__prepare_request_for_prediction(request)
         y_class = self.model_clf.predict_proba(X_class)[:, 1]
 
-        self.df_result_class = self.__get_top_n_records(X_class, y_class, "success_max", n_top, False)
-        return self.df_result_class
+        self.df_res_class = self.__get_top_n_records(X_class, y_class, "success_max", n_top, False)
+        return self.df_res_class
     
 
     def predict_top_n_fee(self, n_top = 1):
-        X_reg = self.df_result_class[["PSP_UK_Card", "PSP_Goldcard", "PSP_Simplecard", "PSP_Moneycard", "success_max", "card_Visa"]]
+        X_reg = self.df_res_class[["PSP_UK_Card", "PSP_Goldcard", "PSP_Simplecard", "PSP_Moneycard", "success_max", "card_Visa"]]
         y_reg = self.model_reg.predict(X_reg)
 
-        self.df_result_regr = self.__get_top_n_records(X_reg, y_reg, "fee", n_top)
-        return self.df_result_regr
+        self.df_res_regr = self.__get_top_n_records(X_reg, y_reg, "fee", n_top)
+        return self.df_res_regr
     
     
     def get_predicted_psp(self):
-        return (self.df_result_regr == 1).idxmax(axis=1).values[0]
+        return (self.df_res_regr == 1).idxmax(axis=1).values[0][4:] # Remove 'PSP_' at the beginning of the string
